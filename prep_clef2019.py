@@ -37,6 +37,8 @@ def combine(clef2019path):
 
     if not os.path.exists(combined_path):
         subprocess.call(f"mkdir {combined_path}", shell=True)
+    if not os.path.exists(targetimgs_path):
+        subprocess.call(f"mkdir {targetimgs_path}", shell=True)
 
     _copy(train_df_multiclass, os.path.join(train_path, "Train_images"), targetimgs_path, "train")
     _copy(val_df_multiclass, os.path.join(val_path, "Val_images"), targetimgs_path, "val")
