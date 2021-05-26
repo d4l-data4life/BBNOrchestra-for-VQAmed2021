@@ -1,0 +1,63 @@
+NAME: 'VQAMed2021.BBN.Resnest50-orchestra.450epoch'
+OUTPUT_DIR: './output/VQAMed2021'
+SHOW_STEP: 50
+SAVE_STEP: 50
+VALID_STEP: 1
+INPUT_SIZE: (224, 224)
+COLOR_SPACE: 'RGB'
+CPU_MODE: False
+
+DATASET:
+  DATASET: 'VQAMed'
+  DATASETBAGGING: 'VQAMedBagging'
+  DATA_TYPE: 'jpg'
+  TRAIN_JSON: './jsons/train.json'
+  VALID_JSON: "./jsons/valid.json"
+  # VALID_JSON: "./jsons/test.json"
+  CATID_LABEL_JSON: "./jsons/categoryid_to_actuallabel.json"
+  N_SPLITS: 4 
+
+BACKBONE:
+  TYPE: 'bbn_ress50'
+
+MODULE:
+  TYPE: 'GAP'
+
+LOSS:
+  LOSS_TYPE: 'CrossEntropy'
+
+CLASSIFIER:
+  TYPE: 'FC'
+  BIAS: True
+
+TRAIN:
+  BATCH_SIZE: 32
+  MAX_EPOCH: 450
+  NUM_WORKERS: 16
+  COMBINER:
+    TYPE: 'bbn_mix'
+  TENSORBOARD:
+    ENABLE: True
+  SAMPLER:
+    TYPE: 'default'
+    DUAL_SAMPLER:
+      ENABLE: True
+      TYPE: 'reverse'
+  OPTIMIZER:
+    TYPE: 'SGD'
+    BASE_LR: 0.1
+    MOMENTUM: 0.9
+    WEIGHT_DECAY: 4e-4
+  LR_SCHEDULER:
+    TYPE: 'multistep'
+    LR_STEP: [150, 250, 300]
+    LR_FACTOR: 0.1
+
+TRANSFORMS:
+  TRAIN_TRANSFORMS: ("random_resized_crop", "random_horizontal_flip")
+  TEST_TRANSFORMS: ("shorter_resize_for_crop", "center_crop")
+  
+TEST:
+  BATCH_SIZE: 8 
+  NUM_WORKERS: 4
+  MODEL_FILE: "/path/to/BBNOrchestra-for-VQAmed2021/output/VQAMed2021/VQAMed2021.BBN.Resnest50-orchestra.450epoch"
