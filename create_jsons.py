@@ -39,6 +39,12 @@ def _update_annotations(df, basepath, labels_to_ids, annotations, name, test=Fal
     return annotations
 
 
+def _categoryid_to_label(labels_to_ids, jsonpath):
+    catid_to_label = {v: k for k, v in labels_to_ids.items()}
+    with open(os.path.join(jsonpath, "categoryid_to_actuallabel.json"), 'w') as f:
+        json.dump(catid_to_label, f)
+
+
 def create_jsons(train2020path, val2020path, clef2019path, val2021path, test2021path, jsonpath):
     # read date
     train2020_df = pd.read_csv(os.path.join(train2020path, "VQAnswering_2020_Train_QA_pairs.txt"), delimiter='|', names=['imgid', 'question', 'answer'])
@@ -67,10 +73,17 @@ def create_jsons(train2020path, val2020path, clef2019path, val2021path, test2021
             "annotations": annotations
             }
 
+    logger.info("Creating valid json for BBN...")
+    val_annotations = []
+    val_annotations = _update_annotations(val2021_df, os.path.join(val2021path, "ImageCLEF-2021-VQA-Med-New-Validation-Images"), labels_to_ids, val_annotations, "val2021")
+    val_bbn_dict = {
+            "num_classes": len(labels),
+            "annotations": val_annotations
+            }
 
     logger.info("Creating test json for BBN...")
     test_annotations = []
-    test_annotations = _update_annotations(test2021_df, os.path.join(test2021path, "Task1-VQA-2021-TestSet-Images"), {}, test_annotations, "test 2021", test=True)
+    test_annotations = _update_annotations(test2021_df, os.path.join(test2021path, "Task1-VQA-2021-TestSet-Images/VQA-500-Images"), labels_to_ids, test_annotations, "test 2021", test=True)
 
     test_bbn_dict = {
             "num_classes": len(labels),
@@ -80,8 +93,14 @@ def create_jsons(train2020path, val2020path, clef2019path, val2021path, test2021
     # dump dictionary to json
     with open(os.path.join(jsonpath, "train.json"), 'w') as f:
         json.dump(bbn_dict, f)
+    with open(os.path.join(jsonpath, "valid.json"), 'w') as f:
+        json.dump(val_bbn_dict, f)
     with open(os.path.join(jsonpath, "test.json"), 'w') as f:
         json.dump(test_bbn_dict, f)
+
+
+    # create dictionary for mapping of category id to actual label
+    _categoryid_to_label(labels_to_ids, jsonpath)
 
 
 if __name__ == "__main__":
