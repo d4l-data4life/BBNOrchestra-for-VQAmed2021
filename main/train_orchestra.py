@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import _init_paths
 import sys
 from loss import *
