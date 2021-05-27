@@ -15,26 +15,27 @@ logger = logging.getLogger(__name__)
 
 def _update_annotations(df, basepath, labels_to_ids, annotations, name, test=False):
     logger.info(f"Update annotations with {name}...")
+    not_seen_labels = 0
     for i, row in tqdm(df.iterrows()):
         imgpath = os.path.join(basepath, f"{row['imgid']}.jpg")
-        if not test:
-            if row['answer'] not in labels_to_ids:
-                continue   # skip the non-intersecting answers from clef 2019
-            innerdict = {
-                    "category_id": labels_to_ids[row['answer']],
-                    "image_id": row['imgid'],
-                    "fpath": imgpath,
-                    "image_label": row['answer']
-                    }
+        if row['answer'] not in labels_to_ids and not test:
+            continue   # skip the non-intersecting answers from clef 2019
+        elif row['answer'] not in labels_to_ids and test:
+            not_seen_labels += 1
+            cat_id = "9999"  # out of classes
         else:
-            innerdict = {
-                    "category_id": "",
-                    "image_id": row['imgid'],
-                    "fpath": imgpath,
-                    "image_label": ""
-                    }
+            cat_id = labels_to_ids[row['answer']]
+
+        innerdict = {
+                "category_id": cat_id,
+                "image_id": row['imgid'],
+                "fpath": imgpath,
+                "image_label": row['answer'] 
+                }
 
         annotations.append(innerdict)
+
+    logger.info(f"Number of not seen labels: {not_seen_labels}")
 
     return annotations
 
@@ -46,12 +47,12 @@ def _categoryid_to_label(labels_to_ids, jsonpath):
 
 
 def create_jsons(train2020path, val2020path, clef2019path, val2021path, test2021path, jsonpath):
-    # read date
+    # read data
     train2020_df = pd.read_csv(os.path.join(train2020path, "VQAnswering_2020_Train_QA_pairs.txt"), delimiter='|', names=['imgid', 'question', 'answer'])
     val2020_df = pd.read_csv(os.path.join(val2020path, "VQAnswering_2020_Val_QA_Pairs.txt"), delimiter='|', names=['imgid', 'question', 'answer'])
     clef2019_df = pd.read_csv(os.path.join(clef2019path, "combined_train_val_test.csv"), delimiter='|')
     val2021_df = pd.read_csv(os.path.join(val2021path, "VQA-Med-2021-VQAnswering-Task1-New-ValidationSet.txt"), delimiter='|', names=['imgid', 'question', 'answer'])
-    test2021_df = pd.read_csv(os.path.join(test2021path, "Task1-VQA-2021-TestSet-Questions.txt"), delimiter='|', names=['imgid', 'question'])
+    test2021_df = pd.read_csv(os.path.join(test2021path, "Task1-VQA-2021-TestSet-ReferenceAnswers.txt"), delimiter='|', names=['imgid', 'answer', 'descp', 'descp2'])
     
     # omit yes/no data
     train2020_multiclass = train2020_df.loc[~train2020_df['answer'].isin(["yes", "no"])]
@@ -63,6 +64,8 @@ def create_jsons(train2020path, val2020path, clef2019path, val2021path, test2021
     annotations = []
     labels = train2020_multiclass['answer'].unique()
     labels_to_ids = {k: v for v, k in enumerate(labels)}
+    # create dictionary for mapping of category id to actual label
+    _categoryid_to_label(labels_to_ids, jsonpath)
     annotations = _update_annotations(train2020_multiclass, os.path.join(train2020path, "VQAnswering_2020_Train_images"), labels_to_ids, annotations, "train2020")
     annotations = _update_annotations(val2020_multiclass, os.path.join(val2020path, "VQAnswering_2020_Val_images"), labels_to_ids, annotations, "val2020")
     annotations = _update_annotations(clef2019_multiclass, os.path.join(clef2019path, "images"), labels_to_ids, annotations, "clef2019")
@@ -99,13 +102,10 @@ def create_jsons(train2020path, val2020path, clef2019path, val2021path, test2021
         json.dump(test_bbn_dict, f)
 
 
-    # create dictionary for mapping of category id to actual label
-    _categoryid_to_label(labels_to_ids, jsonpath)
-
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description="Create input json using train and validation sets for BBN Orchestra.")
+    parser = argparse.ArgumentParser(description="Create input jsons using train, validation and test sets for BBN Orchestra.")
     parser.add_argument(type=str, dest='train2020path', help='Path to the train2020 directory containing images folder and txt file.')
     parser.add_argument(type=str, dest='val2020path', help='Path to the val2020 directory containing images and txt file.')
     parser.add_argument(type=str, dest='clef2019path', help='Path to the clef2019 directory containing images and txt file.')
