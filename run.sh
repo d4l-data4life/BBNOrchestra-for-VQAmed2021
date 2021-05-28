@@ -19,7 +19,6 @@ TRAINPROG=./main/train_orchestra.py
 VALIDPROG=./main/valid_orchestra.py
 
 # Pipeline
-
 chmod +x $PREPPROG
 chmod +x $CREATEPROG
 chmod +x $TRAINPROG
@@ -35,10 +34,3 @@ echo "Training BBN-Orchestra..."
 $TRAINPROG --cfg $CONFIGFILE
 echo "Validating BBN-Orchestra..."
 $VALIDPROG --cfg $CONFIGFILE
-
-
-
-
-
-
-

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def _copy(df, sourcepath, targetpath, name):
-    logger.info(f"Move {name} data to target location...")
+    logger.info(f"Copy {name} data to target location...")
     for img in tqdm(df['imgid']):
         sourceimgpath = os.path.join(sourcepath, f"{img}.jpg")
         subprocess.call(f"cp {sourceimgpath} {targetpath}", shell=True)
@@ -52,7 +52,7 @@ def combine(clef2019path):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description="Prepare clef2019 for training. Create a new directpry and copies combined train, validation and test sets deom VQA Med 2019 abnormality question type.")
+    parser = argparse.ArgumentParser(description="Prepare clef2019 for training. Create a new directory and copies combined train, validation and test sets deom VQA Med 2019 abnormality question type.")
     parser.add_argument(type=str, dest='clef2019path', help='Path to the directory containing train, validation and test set from VQA-Med 2019.')
 
     clef2019path = parser.parse_args().clef2019path
